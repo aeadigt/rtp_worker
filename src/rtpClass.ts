@@ -1,42 +1,34 @@
 import {EventEmitter} from 'events';
-import * as FileStream from 'fs';
 import {Buffer} from 'buffer';
 
 export class Rtp extends EventEmitter {
     private client: any;
-    private fs: any;
     private stun: any;
     private stt: any;
     private stream_on: any;
-    private rec_start: any;
     private sessionID: any;
 
     private audioPayload: any;
-    private fileCodec: any;
     private wavDataOffset: any;
     private RtpPacket: any;
 
-    private wav: any;
     private lastSttOpt: any;
     private g711: any;
 
     constructor(sessionID: any) {
         super();
+
         this.client = require("dgram").createSocket('udp4');
-        this.fs = FileStream;
         this.stun = require('vs-stun');
         this.stt;
         this.stream_on;
-        this.rec_start;
         this.sessionID = sessionID;
 
         this.audioPayload = 0; //RFC3551//PCMU,
-        this.fileCodec;
         this.wavDataOffset = 58;
         this.RtpPacket = require('./rtppacket').RtpPacket;
 
         this.g711 = new(require('./G711').G711)();
-        this.wav = require('wav');
         this.lastSttOpt;
 
         this.on('addBuffer', (buffer: Buffer) => {
