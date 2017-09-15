@@ -1,52 +1,42 @@
-'use strict';
+import {EventEmitter} from 'events';
+import * as FileStream from 'fs';
+import {Buffer} from 'buffer';
 
-import EventEmitter = require('events');
+export class Rtp extends EventEmitter {
+    private client: any;
+    private fs: any;
+    private stun: any;
+    private stt: any;
+    private stream_on: any;
+    private rec_start: any;
+    private sessionID: any;
 
-class Rtp extends EventEmitter {
-    public client: any;
-    public fs: any;
-    public stun: any;
-    public stt: any;
-    public stream_on: any;
-    public rec_start: any;
-    public rec_type: any;
-    public audio_stream_in: any;
-    public audio_stream_out: any;
-    public sessionID: any;
+    private audioPayload: any;
+    private fileCodec: any;
+    private wavDataOffset: any;
+    private RtpPacket: any;
 
-    public audioPayload: any;
-    public fileCodec: any;
-    public wavDataOffset: any;
-    public Buffer: any;
-    public RtpPacket: any;
-    
-    public wav: any;
-    public lastSttOpt: any;
-    public g711: any;
+    private wav: any;
+    private lastSttOpt: any;
+    private g711: any;
 
     constructor(sessionID: any) {
         super();
         this.client = require("dgram").createSocket('udp4');
-        this.fs = require('fs');
+        this.fs = FileStream;
         this.stun = require('vs-stun');
         this.stt;
         this.stream_on;
         this.rec_start;
-        this.rec_type;
-        this.audio_stream_in;
-        this.audio_stream_out;
         this.sessionID = sessionID;
 
         this.audioPayload = 0; //RFC3551//PCMU,
         this.fileCodec;
         this.wavDataOffset = 58;
-        this.Buffer = require('buffer').Buffer,
         this.RtpPacket = require('./rtppacket').RtpPacket;
 
         this.g711 = new(require('./G711').G711)();
-
         this.wav = require('wav');
-
         this.lastSttOpt;
 
         this.on('addBuffer', (buffer: Buffer) => {
@@ -55,7 +45,7 @@ class Rtp extends EventEmitter {
     }
 
     // ******************** Поднять Rtp поток на порту ********************
-    rtpInPort(params: any) {
+    private rtpInPort(params: any) {
         if (params && params.audioCodec === 'PCMA')
             this.audioPayload = 8;
 
@@ -79,7 +69,7 @@ class Rtp extends EventEmitter {
     }
 
     // ******************** Инициализация ********************
-    init(params: any, cb: any) {
+    private init(params: any, cb: any) {
 
         let buf2array = (buf: any) => {
             var data = [];
@@ -151,23 +141,6 @@ class Rtp extends EventEmitter {
             if (!params.dtmf_detect && !params.stt_detect && !params.file && !params.media_stream)
                 return;
 
-            if (this.rec_type != params.rec) {
-
-                this.rec_type = params.rec;
-
-                if (this.rec_type == false) {
-                    if (this.audio_stream_in)
-                        this.audio_stream_in.end();
-                    else {
-                        (process as any).send({
-                            action: 'recOff',
-                            params: {},
-                            error: 'Record file not found'
-                        });
-                    }
-                }
-            }
-
             var data = rtp_data(msg);
 
             if (data.type == params.dtmf_payload_type) {
@@ -216,32 +189,7 @@ class Rtp extends EventEmitter {
                     }
 
                     if (params.rec && params.file) {
-                        if (!this.audio_stream_in) {
-                            this.audio_stream_in = new this.wav.FileWriter(params.file + '.in', {
-                                format: this.audioPayload ? 6 : 7, //7 pcmu, 6 pcma
-                                channels: 1,
-                                sampleRate: 8000,
-                                bitDepth: 8
-                            });
-                            this.audio_stream_out = new this.wav.FileWriter(params.file + '.out', {
-                                format: this.audioPayload ? 6 : 7, //7 pcmu, 6 pcma
-                                channels: 1,
-                                sampleRate: 8000,
-                                bitDepth: 8
-                            });
-
-                            this.audio_stream_in.on("finish", () => {
-                                (process as any).send({
-                                    action: 'recOff',
-                                    params: {
-                                        file: params.file
-                                    }
-                                });
-                            });
-                            this.rec_start = process.hrtime(); //время старта входящего потока
-                        }
-                        if (!this.audio_stream_in.ending)
-                            this.audio_stream_in.write(data.source);
+                        this.emit('writeDataIn', data.source);
                     }
 
                     var payload;
@@ -307,53 +255,15 @@ class Rtp extends EventEmitter {
             }
         });
 
-        this.client.on("close", () => {
-            var f = () => {
-                let toDo = () => {
-                    if (cb)
-                        cb();
-                    process.nextTick(process.exit());
-                };
-                var recFile = this.client.params.in.file;
-
-                if (this.fs.existsSync(recFile + '.in') &&
-                    this.fs.existsSync(recFile + '.out')) {
-                    var spawn = require('child_process').spawn,
-                        //микшируем записи входящего и исходящего потока
-                        // -m: все в один моно файл
-                        // -M: стерео файл, левый канал - входящий поток, правый - исходящий 
-                        sox = spawn('sox', [this.client.params.in.type || '-m', recFile + '.in', recFile + '.out', recFile]);
-                    sox.on('error', (e: any) => {
-                        (process as any).send('SOX on Error pid:' + process.pid + ': ' + e.stack);
-                        toDo();
-                    });
-                    sox.stdout.on('finish', () => {
-                        this.fs.unlinkSync(recFile + '.in');
-                        this.fs.unlinkSync(recFile + '.out');
-                        toDo();
-                    });
-                } else
-                    toDo();
-            };
-            if (this.audio_stream_in) {
-                this.audio_stream_in.on("finish", () => {
-                    if (this.audio_stream_out) {
-                        this.audio_stream_out.on("finish", f);
-                        this.audio_stream_out.end();
-                        this.audio_stream_out.ending = true;
-                    } else
-                        f();
-                });
-                this.audio_stream_in.end();
-            } else
-                f();
+        this.client.on('close', () => {
+            this.emit('socketClose');
         });
 
         this.sendFreePacket();
     }
 
     // ******************** Отправка пустого пакета ********************    
-    sendFreePacket() {
+    private sendFreePacket() {
         let rtpPacket = new this.RtpPacket(new Buffer(1)); //send empty packet
         rtpPacket.time += 1;
         rtpPacket.seq++;
@@ -361,18 +271,18 @@ class Rtp extends EventEmitter {
     }
 
     // ******************** Закрыть сокет ********************    
-    close() {
+    private close() {
         this.client.close();
     }
 
     // ******************** Отправить буфер ********************
-    send(buffer: Buffer) {
+    private send(buffer: Buffer) {
         // (process as any).send('Send Buffer: ' + buffer);
         this.client.send(buffer, 0, buffer.length, this.client.params.out.port, this.client.params.out.ip);
     }
 
     // ******************** Установка параметров ********************
-    rec(params: any) { 
+    private rec(params: any) { 
         for (var key in params)
             this.client.params.in[key] = params[key];
 
@@ -384,7 +294,3 @@ class Rtp extends EventEmitter {
         }
     }
 }
-
-module.exports = {
-    Rtp: Rtp
-};

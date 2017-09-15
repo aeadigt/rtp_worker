@@ -1,27 +1,25 @@
-'use strict';
+import {EventEmitter} from 'events';
+import * as FileStream from 'fs';
 
-import EventEmitter = require('events');
-
-class RtpPlayer extends EventEmitter {
-    public sessionID: any;
-    public fs: any;
-    public audioBuffers: any;
-    public streaming: any;
-    public stop_flag: any;
-    public bufferSize: any;
-    public g711: any;
-    public fileCodec: any;
-    public wavDataOffset: any;
-    public rec_start: any;
-    public rtp_packet: any;
-    public audioPayload: any;
-    public RtpPacket: any;
-    public audio_stream_out: any;
-    public isBufferReceived: any;
+export class RtpPlayer extends EventEmitter {
+    private sessionID: any;
+    private fs: any;
+    private audioBuffers: any;
+    private streaming: any;
+    private stop_flag: any;
+    private bufferSize: any;
+    private g711: any;
+    private fileCodec: any;
+    private wavDataOffset: any;
+    private rtp_packet: any;
+    private audioPayload: any;
+    private RtpPacket: any;
+    private audio_stream_out: any;
+    private isBufferReceived: any;
 
     constructor(sessionID: any) {
         super();
-        this.fs = require('fs');
+        this.fs = FileStream;
         this.sessionID = sessionID;
         this.audioBuffers = {};
         this.streaming;
@@ -30,7 +28,6 @@ class RtpPlayer extends EventEmitter {
         this.g711 = new(require('./G711').G711)();
         this.fileCodec;
         this.wavDataOffset = 58;
-        this.rec_start;
         this.rtp_packet;
         this.audioPayload = 0; //RFC3551//PCMU,
         this.RtpPacket = require('./rtppacket').RtpPacket;
@@ -39,7 +36,7 @@ class RtpPlayer extends EventEmitter {
     }
 
     // ******************** Воспроизведение файла или буфера ********************    
-    startPlay(data: any) {
+    private startPlay(data: any) {
         let params = data.params;
 
         if (params.file) {
@@ -86,7 +83,7 @@ class RtpPlayer extends EventEmitter {
     }
 
     // ******************** Проигрывание ********************    
-    play(params: any, cb: any) {
+    private play(params: any, cb: any) {
         (process as any).send('rtpPlayer method play');
 
         var files: any[];
@@ -99,7 +96,7 @@ class RtpPlayer extends EventEmitter {
         this.streaming = params.streaming;
 
         var f = () => {
-            // this.recBuffer();
+            this.startPlayFile();
 
             var start: any,
                 i = 0,
@@ -124,17 +121,12 @@ class RtpPlayer extends EventEmitter {
             (process as any).send({ action: 'audioBuffer', params: { data: [bytesRead] } });
 
             var writeData = () => {
-                // if (this.client.params.in.rec &&
-                    // this.client.params.in.file &&
-                    // this.audio_stream_out && this.rtp_packet && bytesRead) {
+                if (this.rtp_packet && bytesRead) {
+                    var _buf = new Buffer(buf.length);
+                    this.rtp_packet.packet.copy(_buf, 0, 12);
 
-                    // if (!this.audio_stream_out.ending) {
-                        // var _buf = new Buffer(buf.length);
-                        // this.rtp_packet.packet.copy(_buf, 0, 12);
-                        // this.audio_stream_out.write(_buf);
-                    // }
-                    // this.rec_start = process.hrtime();
-                // }
+                    this.emit('writeDataOut', _buf);
+                }
 
                 bytesRead = 0;
                 buf.fill(this.audioPayload ? 213 : 127); //пакет заполняем тишиной );//тишина 127 - pcmu, 213 - pcma
@@ -224,7 +216,7 @@ class RtpPlayer extends EventEmitter {
     }
 
     // ******************** Добавить audioBuffer ********************
-    addAudioBuffer(params: any) {
+    private addAudioBuffer(params: any) {
         if (this.streaming) {
             this.bufferSize = params.data.length;
             this.audioBuffers[params.sessionID] = new Buffer(params.data);
@@ -238,7 +230,7 @@ class RtpPlayer extends EventEmitter {
     }
 
     // ******************** Транскодинг ********************    
-    transcoding(buf: any) {
+    private transcoding(buf: any) {
         if (this.fileCodec === 7 //pcmu 
             && this.audioPayload === 8) { //pcma   //u->a transcoding
             //process.send('pid:' + process.pid + ': pcmu->pcma transcoding');
@@ -256,34 +248,14 @@ class RtpPlayer extends EventEmitter {
     }
 
     // ******************** Оставовка проигрывания ********************    
-    stopPlay() { 
+    private stopPlay() { 
         this.stop_flag = true;
     }
 
-    // ******************** Запись данных в Rec ********************    
-    /*
-    recBuffer() { 
-        if (this.client.params.in.rec &&
-            this.client.params.in.file &&
-            this.audio_stream_out && this.rtp_packet) {
-
-            var rec_end = process.hrtime(this.rec_start),
-                streamTimeout = rec_end[0] * 1000 + rec_end[1] / 1000000;
-
-            var silenceLen: any = (streamTimeout - (this.bufferSize / 8)).toFixed(); //ms
-
-            if (silenceLen > (this.bufferSize / 8)) { //прошло больше времени размера пакета
-                var silenceBuf = new Buffer(silenceLen * 8);
-                silenceBuf.fill(this.audioPayload ? 213 : 127); //тишина 127 - pcmu, 213 - pcma
-                if (!this.audio_stream_out.ending) {
-                    this.audio_stream_out.write(silenceBuf);
-                }
-            }
+    // ******************** Запись данных ********************    
+    private startPlayFile() { 
+        if (this.rtp_packet) {
+            this.emit('startPlayFile');
         }
     }
-    */
 }
-
-module.exports = {
-    RtpPlayer: RtpPlayer
-};

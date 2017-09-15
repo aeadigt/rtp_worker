@@ -1,4 +1,6 @@
-'use strict';
+import {Rtp} from "./rtpClass"
+import {RtpPlayer} from "./rtpPlayer"
+import {RtpRecorder} from "./rtpRecorder"
 
 process.on('disconnect', () => {
     process.exit();
@@ -18,6 +20,7 @@ process.on('warning', (e: any) => {
 
 let rtp: any;
 let player: any;
+let recorder: any;
 
 process.on('message', (data) => {
     if (!data) return;
@@ -31,24 +34,39 @@ process.on('message', (data) => {
     }
 
     if (data.action === 'rtpInPort') {
-        let Rtp = require('./rtpClass').Rtp;
+
+        // ******************** Создание экземпляров ********************
         rtp = new Rtp(data.params.sessionID);
+        player = new RtpPlayer(data.params.sessionID);
+        recorder = new RtpRecorder(data.params.sessionID);
 
-        let Player = require('./rtpPlayer').RtpPlayer;
-        player = new Player(data.params.sessionID);
+        // ******************** Обработчики Плеера ********************
+        rtp.on('writeDataIn', (buffer: Buffer) => {
+            recorder.emit('writeDataIn', buffer);
+        });
 
+        rtp.on('socketClose', () => {
+            recorder.emit('socketClose');
+        });
+
+        // ******************** Обработчики Плеера ********************
         player.on('buffer', (buffer: Buffer) => {
             rtp.emit('addBuffer', buffer);
+        });
+
+        player.on('startPlayFile', () => {
+            recorder.emit('startPlayFile');
+        });
+
+        player.on('writeDataOut', (buffer: Buffer) => {
+            recorder.emit('writeDataOut', buffer);
         });
 
         rtp.rtpInPort(params);
     }
 
     if (data.action === 'init') {
-        rtp.init(params, () => {
-            data.action = 'stop';
-            (process as any).send(data);
-        });
+        rtp.init(params);
         (process as any).send(data);
     }
 
@@ -67,5 +85,6 @@ process.on('message', (data) => {
     if (data.action === 'rec' && (params)) {
         (process as any).send(data);
         rtp.rec(params);
+        recorder.rec(params);
     }
 });
