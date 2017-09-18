@@ -2,7 +2,7 @@
   "name": "ts",
   "version": "1.0.0",
   "description": "",
-  "main": "rtpManager.js",
+  "main": "mediaHandler.js",
   "dependencies": {
     "@types/node": "^8.0.27"
   },

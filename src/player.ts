@@ -1,7 +1,7 @@
 import {EventEmitter} from 'events';
 import * as FileStream from 'fs';
 
-export class RtpPlayer extends EventEmitter {
+export class Player extends EventEmitter {
     private sessionID: any;
     private fs: any;
     private audioBuffers: any;

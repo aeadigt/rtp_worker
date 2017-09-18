@@ -1,7 +1,7 @@
 import {EventEmitter} from 'events';
 import {Buffer} from 'buffer';
 
-export class Rtp extends EventEmitter {
+export class Socket extends EventEmitter {
     private client: any;
     private stun: any;
     private stt: any;

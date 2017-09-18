@@ -2,7 +2,7 @@ import {EventEmitter} from 'events';
 import * as FileStream from 'fs';
 import {spawn} from 'child_process';
 
-export class RtpRecorder extends EventEmitter {
+export class Recorder extends EventEmitter {
     private audio_stream_out: any;
     private rtp_packet: any;
     private rec_start: any;
