@@ -29,17 +29,17 @@ export class RtpRecorder extends EventEmitter {
         this.fs = FileStream;
 
         this.on('startPlayFile', (buffer: Buffer) => {
-            (process as any).send('!!!!! rtpRecorder [startPlayFile]');
+            // (process as any).send('rtpRecorder [startPlayFile]');
             this.startPlayFile();
         });
 
         this.on('writeDataOut', (buffer: Buffer) => {
-            // (process as any).send('!!!!! rtpRecorder [writeData] buffer: ' + buffer);
+            // (process as any).send('rtpRecorder [writeData] buffer: ' + buffer);
             this.writeDataOut(buffer);
         });
 
         this.on('writeDataIn', (buffer: Buffer) => {
-            // (process as any).send('!!!!! rtpRecorder [writeData] buffer: ' + buffer);
+            // (process as any).send('rtpRecorder [writeData] buffer: ' + buffer);
             this.writeDataIn(buffer);
         });
 
@@ -60,7 +60,7 @@ export class RtpRecorder extends EventEmitter {
                 let silenceBuf = new Buffer(silenceLen * 8);
                 silenceBuf.fill(this.audioPayload ? 213 : 127); //тишина 127 - pcmu, 213 - pcma
                 if (!this.audio_stream_out.ending) {
-                    (process as any).send('!!!!! rtpRecorder [startPlayFile] silenceBuf: ' + silenceBuf);
+                    // (process as any).send('rtpRecorder [startPlayFile] silenceBuf: ' + silenceBuf);
                     this.audio_stream_out.write(silenceBuf);
                 }
             }
@@ -69,7 +69,7 @@ export class RtpRecorder extends EventEmitter {
 
     // ******************** Запись данных ********************    
     private writeDataOut(buffer: Buffer) { 
-        if (this.in.rec && this.in.file && this.audio_stream_out) {
+        if (buffer && this.in.rec && this.in.file && this.audio_stream_out) {
             this.rec_start = process.hrtime();
 
             if (!this.audio_stream_out.ending) {

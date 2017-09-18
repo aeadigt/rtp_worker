@@ -84,7 +84,7 @@ export class RtpPlayer extends EventEmitter {
 
     // ******************** Проигрывание ********************    
     private play(params: any, cb: any) {
-        (process as any).send('rtpPlayer method play');
+        // (process as any).send('rtpPlayer method play');
 
         var files: any[];
 
