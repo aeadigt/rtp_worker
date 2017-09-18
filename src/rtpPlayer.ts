@@ -165,8 +165,6 @@ export class RtpPlayer extends EventEmitter {
                     i++;
 
                     let tFn = () => {
-                        // (process as any).send('tFn 0');
-
                         var timeOut = start + writeInterval * i;
                         var t_ = timeOut - Date.now();
                         if (params.streaming) {

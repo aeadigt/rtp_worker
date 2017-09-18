@@ -25,7 +25,7 @@ let recorder: any;
 process.on('message', (data) => {
     if (!data) return;
 
-    (process as any).send(data.action);
+    // (process as any).send(data.action);
 
     let params = data.params;
 
@@ -55,6 +55,7 @@ process.on('message', (data) => {
         });
 
         player.on('startPlayFile', () => {
+            (process as any).send('startPlayFile Manager');
             recorder.emit('startPlayFile');
         });
 

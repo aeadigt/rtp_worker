@@ -28,7 +28,7 @@ export class RtpRecorder extends EventEmitter {
         this.rec_type;
         this.fs = FileStream;
 
-        this.on('startPlayFile', (buffer: Buffer) => {
+        this.on('startPlayFile', () => {
             // (process as any).send('rtpRecorder [startPlayFile]');
             this.startPlayFile();
         });
@@ -59,8 +59,8 @@ export class RtpRecorder extends EventEmitter {
             if (silenceLen > (this.bufferSize / 8)) { //прошло больше времени размера пакета
                 let silenceBuf = new Buffer(silenceLen * 8);
                 silenceBuf.fill(this.audioPayload ? 213 : 127); //тишина 127 - pcmu, 213 - pcma
+
                 if (!this.audio_stream_out.ending) {
-                    // (process as any).send('rtpRecorder [startPlayFile] silenceBuf: ' + silenceBuf);
                     this.audio_stream_out.write(silenceBuf);
                 }
             }
@@ -73,7 +73,6 @@ export class RtpRecorder extends EventEmitter {
             this.rec_start = process.hrtime();
 
             if (!this.audio_stream_out.ending) {
-
                 this.audio_stream_out.write(buffer);
             }
         }
@@ -107,16 +106,11 @@ export class RtpRecorder extends EventEmitter {
                         }
                     });
                 });
+                this.rec_start = process.hrtime(); //время старта входящего потока
             }
         }
 
-        if (!this.rec_start) {
-            this.rec_start = process.hrtime(); //время старта входящего потока
-        }
-
         if (this.in.rec && this.in.file && this.audio_stream_in) {
-            this.rec_start = process.hrtime();
-
             if (!this.audio_stream_in.ending) {
                 this.audio_stream_in.write(buffer);
             }
