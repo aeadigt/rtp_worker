@@ -55,7 +55,7 @@ process.on('message', (data) => {
         });
 
         player.on('startPlayFile', () => {
-            (process as any).send('startPlayFile Manager');
+            // (process as any).send('startPlayFile Manager');
             recorder.emit('startPlayFile');
         });
 
