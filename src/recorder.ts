@@ -15,7 +15,7 @@ export class Recorder extends EventEmitter {
     private rec_type: any;
     private fs: any;
 
-    constructor(sessionID: any) {
+    constructor() {
         super();
 
         this.bufferSize = 320; //8*30 //30 ms

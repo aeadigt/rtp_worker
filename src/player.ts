@@ -2,7 +2,6 @@ import {EventEmitter} from 'events';
 import * as FileStream from 'fs';
 
 export class Player extends EventEmitter {
-    private sessionID: any;
     private fs: any;
     private audioBuffers: any;
     private streaming: any;
@@ -17,10 +16,9 @@ export class Player extends EventEmitter {
     private audio_stream_out: any;
     private isBufferReceived: any;
 
-    constructor(sessionID: any) {
+    constructor() {
         super();
         this.fs = FileStream;
-        this.sessionID = sessionID;
         this.audioBuffers = {};
         this.streaming;
         this.stop_flag;

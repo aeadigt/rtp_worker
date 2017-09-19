@@ -6,7 +6,6 @@ export class Socket extends EventEmitter {
     private stun: any;
     private stt: any;
     private stream_on: any;
-    private sessionID: any;
 
     private audioPayload: any;
     private wavDataOffset: any;
@@ -15,14 +14,13 @@ export class Socket extends EventEmitter {
     private lastSttOpt: any;
     private g711: any;
 
-    constructor(sessionID: any) {
+    constructor() {
         super();
 
         this.client = require("dgram").createSocket('udp4');
         this.stun = require('vs-stun');
         this.stt;
         this.stream_on;
-        this.sessionID = sessionID;
 
         this.audioPayload = 0; //RFC3551//PCMU,
         this.wavDataOffset = 58;
@@ -174,7 +172,6 @@ export class Socket extends EventEmitter {
                         (process as any).send({
                             action: 'mediaStream',
                             params: {
-                                sessionID: this.sessionID,
                                 data: Array.from(new Uint8Array(data.source)) // for webkit - data.source
                             }
                         });
