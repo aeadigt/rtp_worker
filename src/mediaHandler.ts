@@ -33,37 +33,47 @@ class MediaHandler {
             // (process as any).send(data.action);
 
             let params = data.params;
+            if (!params) return false;
 
-            if (data.action === 'audioBuffer' && params.sessionID && params.data.length) {
-                this.socket.addAudioBuffer(params);
-            }
+            switch(data.action) {
+                case 'audioBuffer':
+                    if (params.sessionID && params.data.length) {
+                        this.socket.addAudioBuffer(params);
+                    }
+                    break;
 
-            if (data.action === 'rtpInPort') {
-                this.createHandlers();
-                this.socket.rtpInPort(params);
-            }
+                case 'rtpInPort':
+                    this.createHandlers();
+                    this.socket.rtpInPort(params);
+                    break;
 
-            if (data.action === 'init') {
-                this.socket.init(params);
-                (process as any).send(data);
-            }
+                case 'init':
+                    this.socket.init(params);
+                    (process as any).send(data);
+                    break;
 
-            if (data.action === 'close') {
-                this.socket.close();
-            }
+                case 'close':
+                    this.socket.close();
+                    break;
 
-            if (data.action === 'stop_play') {
-                this.socket.stopPlay();
-            }
+                case 'stop_play':
+                    this.socket.stopPlay();
+                    break;
 
-            if ( (data.action === 'start_play') && params && (params.file || params.audioBuffer) ) {
-                this.player.startPlay(data);
-            }
+                case 'start_play':
+                    if (params.file || params.audioBuffer) {
+                        this.player.startPlay(data);
+                    }
+                    break;
 
-            if (data.action === 'rec' && (params)) {
-                (process as any).send(data);
-                this.socket.rec(params);
-                this.recorder.rec(params);
+                case 'rec':
+                    (process as any).send(data);
+                    this.socket.rec(params);
+                    this.recorder.rec(params);
+                    break;
+
+                default:
+                    break;
             }
         });
     }
