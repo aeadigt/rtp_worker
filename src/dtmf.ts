@@ -23,20 +23,20 @@ export class Dtmf extends EventEmitter {
 
         this.on('dtmf', (data: any) => {
             if (this.in && this.in.dtmf_detect) {
-                this.dtmf(data);
+                this.setDtmf();
+                this.checkDtmf(data);
             }
         });
 
         this.on('payload', (payload: any) => {
             if (this.in && this.in.dtmf_detect) {
-                this.payload(payload);
+                this.dtmfDetect(payload);
             }
         });
     }
 
-    dtmf(data: any) {
+    setDtmf() {
         // (process as any).send('!!! newDtmf: ' + data.source);
-
         if (this.dtmf_mode === 'inband') {
             this.change_flag = true;
         }
@@ -48,8 +48,10 @@ export class Dtmf extends EventEmitter {
                 params: this.dtmf_mode
             });
         }
+    }
 
-        let dtmf = this.dtmf_data(data.source);
+    checkDtmf(data: any) {
+        let dtmf = this.dtmf_data(data);
 
         if (dtmf.duration < this.prev_dtmf_dur || this.prev_dtmf_dur == 0) {
             if (!this.change_flag) {
@@ -91,7 +93,7 @@ export class Dtmf extends EventEmitter {
         return result;
     }
 
-    payload(payload: any) {
+    dtmfDetect(payload: any) {
         if (this.dtmf_mode !== 'rfc2833') {
             this.dtmf_decoder.filter(payload, (c: any) => {
                 if (!this.dtmf_mode) {
@@ -122,8 +124,8 @@ export class Dtmf extends EventEmitter {
     }
 
     buf2array (buf: any) {
-        var data = [];
-        for (var i = 0; i < buf.length; i++) {
+        let data = [];
+        for (let i = 0; i < buf.length; i++) {
             if (this.audioPayload)
                 data.push(this.g711.alaw2linear(buf.readInt8(i)));
             else
