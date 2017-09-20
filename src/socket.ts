@@ -110,9 +110,7 @@ export class Socket extends EventEmitter {
             var data = rtp_data(msg);
 
             if (data.type == params.dtmf_payload_type) {
-                if (params.dtmf_detect) {
-                    this.emit('dtmf', data);
-                }
+                this.emit('dtmf', data);
             } else {
                 if (data.type == this.audioPayload) {
 
@@ -159,12 +157,11 @@ export class Socket extends EventEmitter {
                         }
                     }
 
-                    if (params.dtmf_detect) {
-                        this.emit('payload', { 
-                            payload: payload, 
-                            data: data
-                        });
+                    if (!payload) {
+                        payload = buf2array(data.source);
                     }
+
+                    this.emit('payload', payload);
                 }
             }
         });

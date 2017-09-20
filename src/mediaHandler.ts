@@ -72,6 +72,7 @@ class MediaHandler {
                     (process as any).send(data);
                     this.socket.rec(params);
                     this.recorder.rec(params);
+                    this.dtmf.rec(params);
                     break;
 
                 default:
@@ -100,11 +101,11 @@ class MediaHandler {
 
 
         this.socket.on('dtmf', (data: any) => {
-            this.dtmf.emit('newDtmf', data);
+            this.dtmf.emit('dtmf', data);
         });
 
         this.socket.on('payload', (data: any) => {
-            this.dtmf.emit('newPayload', data);
+            this.dtmf.emit('payload', data);
         });
 
 

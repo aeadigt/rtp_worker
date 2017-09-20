@@ -8,6 +8,7 @@ export class Dtmf extends EventEmitter {
     private prev_dtmf_dur: any;
     private audioPayload: any;
     private g711: any;
+    private in: any;
 
     constructor() {
         super();
@@ -18,17 +19,22 @@ export class Dtmf extends EventEmitter {
         this.prev_dtmf_dur = 0;
         this.audioPayload = 0; //RFC3551//PCMU,
         this.g711 = new(require('./G711').G711)();
+        this.in = {};
 
-        this.on('newDtmf', (data: any) => {
-            this.newDtmf(data);
+        this.on('dtmf', (data: any) => {
+            if (this.in && this.in.dtmf_detect) {
+                this.dtmf(data);
+            }
         });
 
-        this.on('newPayload', (data: any) => {
-            this.newPayload(data);
+        this.on('payload', (payload: any) => {
+            if (this.in && this.in.dtmf_detect) {
+                this.payload(payload);
+            }
         });
     }
 
-    newDtmf(data: any) {
+    dtmf(data: any) {
         // (process as any).send('!!! newDtmf: ' + data.source);
 
         if (this.dtmf_mode === 'inband') {
@@ -85,15 +91,8 @@ export class Dtmf extends EventEmitter {
         return result;
     }
 
-    newPayload(msg: any) {
-        let payload = msg.payload;
-        let data = msg.data;
-
+    payload(payload: any) {
         if (this.dtmf_mode !== 'rfc2833') {
-            if (!payload) {
-                payload = this.buf2array(data.source);
-            }
-
             this.dtmf_decoder.filter(payload, (c: any) => {
                 if (!this.dtmf_mode) {
                     this.dtmf_mode = 'inband';
@@ -132,4 +131,12 @@ export class Dtmf extends EventEmitter {
         }
         return data;
     }
+
+    // ******************** Установка параметров ********************
+    private rec(params: any) { 
+        for (let key in params) {
+            this.in[key] = params[key];
+        }
+    }
+
 }
