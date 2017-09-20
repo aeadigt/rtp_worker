@@ -23,7 +23,7 @@ export class Dtmf extends EventEmitter {
 
         this.on('dtmf', (data: any) => {
             if (this.in && this.in.dtmf_detect) {
-                this.setDtmf();
+                this.setDtmfMode();
                 this.checkDtmf(data);
             }
         });
@@ -35,7 +35,7 @@ export class Dtmf extends EventEmitter {
         });
     }
 
-    setDtmf() {
+    setDtmfMode() {
         // (process as any).send('!!! newDtmf: ' + data.source);
         if (this.dtmf_mode === 'inband') {
             this.change_flag = true;
@@ -43,11 +43,11 @@ export class Dtmf extends EventEmitter {
 
         if (!this.dtmf_mode || this.change_flag) {
             this.dtmf_mode = 'rfc2833';
-            (process as any).send({
-                action: 'set_dtmf_mode',
-                params: this.dtmf_mode
-            });
         }
+        (process as any).send({
+            action: 'set_dtmf_mode',
+            params: this.dtmf_mode
+        });
     }
 
     checkDtmf(data: any) {
@@ -98,10 +98,7 @@ export class Dtmf extends EventEmitter {
             this.dtmf_decoder.filter(payload, (c: any) => {
                 if (!this.dtmf_mode) {
                     this.dtmf_mode = 'inband';
-                    (process as any).send({
-                        action: 'set_dtmf_mode',
-                        params: this.dtmf_mode
-                    });
+                    this.setDtmfMode();
                 }
                 if (c.key !== undefined) {
                     (process as any).send({
