@@ -1,12 +1,14 @@
 // ******************** Загрузка зависимостей ********************
-import {Socket} from "./socket"
-import {Player} from "./player"
-import {Recorder} from "./recorder"
+import {Socket} from './socket';
+import {Player} from './player';
+import {Recorder} from './recorder';
+import {Dtmf} from './dtmf';
 
 class MediaHandler {
     private socket: any;
     private player: any;
     private recorder: any;
+    private dtmf: any;
 
     constructor() {
         // ******************** Обработка событий текущего процесса ********************
@@ -84,6 +86,7 @@ class MediaHandler {
         this.socket = new Socket();
         this.player = new Player();
         this.recorder = new Recorder();
+        this.dtmf = new Dtmf();
 
 
         // ******************** Обработчики Плеера ********************
@@ -96,13 +99,21 @@ class MediaHandler {
         });
 
 
+        this.socket.on('dtmf', (data: any) => {
+            this.dtmf.emit('newDtmf', data);
+        });
+
+        this.socket.on('payload', (data: any) => {
+            this.dtmf.emit('newPayload', data);
+        });
+
+
         // ******************** Обработчики Плеера ********************
         this.player.on('buffer', (buffer: Buffer) => {
             this.socket.emit('addBuffer', buffer);
         });
 
         this.player.on('startPlayFile', () => {
-            // (process as any).send('startPlayFile Manager');
             this.recorder.emit('startPlayFile');
         });
 

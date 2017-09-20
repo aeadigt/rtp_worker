@@ -72,25 +72,6 @@ export class Socket extends EventEmitter {
             return data;
         }
 
-        let dtmf_data = (pkt: any) => {
-            var keys: any = {
-                10: '*',
-                11: '#',
-                12: 'A',
-                13: 'B',
-                14: 'C',
-                15: 'D'
-            };
-            var key = pkt[0];
-            if (keys[key])
-                key = keys[key];
-            return {
-                event: key,
-                volume: (pkt[1] >>> 2),
-                duration: (pkt[2] << 8 | pkt[3])
-            };
-        }
-
         let rtp_data = (pkt: any) => {
             return {
                 type: (pkt[1] & 0x7F),
@@ -99,11 +80,6 @@ export class Socket extends EventEmitter {
                 source: pkt.slice(12, pkt.length)
             };
         }
-
-        var dtmf_decoder = require('./dtmf'),
-            dtmf_mode: any,
-            prev_dtmf_dur = 0,
-            change_flag: any;
 
         this.stt = require('./stt');
 
@@ -135,33 +111,7 @@ export class Socket extends EventEmitter {
 
             if (data.type == params.dtmf_payload_type) {
                 if (params.dtmf_detect) {
-                    if (dtmf_mode === 'inband') {
-                        change_flag = true;
-                    }
-
-                    if (!dtmf_mode || change_flag) {
-                        dtmf_mode = 'rfc2833';
-                        (process as any).send({
-                            action: 'set_dtmf_mode',
-                            params: dtmf_mode
-                        });
-                    }
-
-                    var dtmf = dtmf_data(data.source);
-
-                    if (dtmf.duration < prev_dtmf_dur || prev_dtmf_dur == 0) {
-                        if (!change_flag) {
-                            (process as any).send({
-                                action: 'dtmf_key',
-                                params: {
-                                    key: dtmf.event
-                                }
-                            });
-                        }
-                        change_flag = false;
-                    }
-
-                    prev_dtmf_dur = dtmf.duration;
+                    this.emit('dtmf', data);
                 }
             } else {
                 if (data.type == this.audioPayload) {
@@ -207,38 +157,13 @@ export class Socket extends EventEmitter {
                                 this.stt.send(payload);
                             }
                         }
-                    };
+                    }
 
                     if (params.dtmf_detect) {
-                        if (dtmf_mode !== 'rfc2833') {
-                            if (!payload)
-                                payload = buf2array(data.source);
-                            dtmf_decoder.filter(payload, (c: any) => {
-                                if (!dtmf_mode) {
-                                    dtmf_mode = 'inband';
-                                    (process as any).send({
-                                        action: 'set_dtmf_mode',
-                                        params: dtmf_mode
-                                    });
-                                }
-                                if (c.key !== undefined) {
-                                    (process as any).send({
-                                        action: 'dtmf_key',
-                                        params: {
-                                            key: c.key
-                                        }
-                                    });
-                                    let last_key = c.key;
-                                };
-                                if (c.seq !== undefined)
-                                    (process as any).send({
-                                        action: 'dtmf_seq',
-                                        params: {
-                                            key: c.seq
-                                        }
-                                    });
-                            });
-                        }
+                        this.emit('payload', { 
+                            payload: payload, 
+                            data: data
+                        });
                     }
                 }
             }
@@ -267,7 +192,11 @@ export class Socket extends EventEmitter {
     // ******************** Отправить буфер ********************
     private send(buffer: Buffer) {
         // (process as any).send('Send Buffer: ' + buffer);
-        this.client.send(buffer, 0, buffer.length, this.client.params.out.port, this.client.params.out.ip);
+        this.client.send(buffer, 0, buffer.length, this.client.params.out.port, this.client.params.out.ip, (err: any) => {
+            if (err) {
+                (process as any).send(err);
+            }
+        });
     }
 
     // ******************** Установка параметров ********************
