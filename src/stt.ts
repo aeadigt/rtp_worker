@@ -16,10 +16,15 @@ export class Stt extends EventEmitter {
 
         this.stt = require('./sttMethods');
 
+        // ********* Обработка событий *********
         this.on('stt', (payload: Buffer) => {
             if (this.in && this.in.stt_detect) {
                 this.speechToText(payload);
             }
+        });
+        
+        this.on('rec', (params: any) => {
+            this.rec(params);
         });
     }
 

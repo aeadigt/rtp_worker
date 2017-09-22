@@ -28,6 +28,7 @@ export class Recorder extends EventEmitter {
         this.rec_type;
         this.fs = FileStream;
 
+        // ********* Обработка событий *********
         this.on('startPlayFile', () => {
             // (process as any).send('rtpRecorder [startPlayFile]');
             this.startPlayFile();
@@ -45,6 +46,10 @@ export class Recorder extends EventEmitter {
 
         this.on('socketClose', () => {
             this.closeStreams();
+        });
+
+        this.on('rec', (params: any) => {
+            this.rec(params);
         });
     }
 

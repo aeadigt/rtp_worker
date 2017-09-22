@@ -26,9 +26,22 @@ export class Socket extends EventEmitter {
 
         this.g711 = new(require('./G711').G711)();
 
+        // ********* Обработка событий *********
         this.on('addBuffer', (buffer: Buffer) => {
             this.send(buffer);
-        })
+        });
+
+        this.on('rtpInPort', (params: any) => {
+            this.rtpInPort(params);
+        });
+
+        this.on('init', (params: any) => {
+            this.init(params);
+        });
+
+        this.on('rec', (params: any) => {
+            this.rec(params);
+        });
     }
 
     // ******************** Поднять Rtp поток на порту ********************
@@ -56,7 +69,7 @@ export class Socket extends EventEmitter {
     }
 
     // ******************** Инициализация ********************
-    private init(params: any, cb: any) {
+    private init(params: any) {
 
         let buf2array = (buf: any) => {
             var data = [];
@@ -131,7 +144,7 @@ export class Socket extends EventEmitter {
         });
 
         this.client.on('close', () => {
-            this.emit('socketClose');
+            this.emit('close');
         });
 
         this.sendFreePacket();

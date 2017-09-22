@@ -31,6 +31,20 @@ export class Player extends EventEmitter {
         this.RtpPacket = require('./rtppacket').RtpPacket;
         this.audio_stream_out;
         this.isBufferReceived;
+
+
+        // ********* Обработка событий *********
+        this.on('audioBuffer', (params: any) => {
+            this.audioBuffer(params);
+        });
+
+        this.on('stop_play', () => {
+            this.stopPlay();
+        });
+
+        this.on('start_play', (data: any) => {
+            this.startPlay(data);
+        });
     }
 
     // ******************** Воспроизведение файла или буфера ********************    
@@ -212,7 +226,7 @@ export class Player extends EventEmitter {
     }
 
     // ******************** Добавить audioBuffer ********************
-    private addAudioBuffer(params: any) {
+    private audioBuffer(params: any) {
         if (this.streaming) {
             this.bufferSize = params.data.length;
             this.audioBuffers[params.sessionID] = new Buffer(params.data);

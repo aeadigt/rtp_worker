@@ -4,88 +4,61 @@ import {Player} from './player';
 import {Recorder} from './recorder';
 import {Dtmf} from './dtmf';
 import {Stt} from './stt';
+import {EventEmitter} from 'events';
 
-class MediaHandler {
-    private socket: any;
-    private player: any;
-    private recorder: any;
-    private dtmf: any;
-    private stt: any;
+export class MediaHandler extends EventEmitter {
+    private socket: Socket;
+    private player: Player;
+    private recorder: Recorder;
+    private dtmf: Dtmf;
+    private stt: Stt;
 
     constructor() {
-        // ******************** Обработка событий текущего процесса ********************
-        process.on('disconnect', () => {
-            process.exit();
-        });
+        super();
 
-        process.on('uncaughtException', (e) => {
-            (process as any).send('uncaughtException pid:' + process.pid + ': stack: ' + e.stack);
-
-            setTimeout(() => {
-                process.exit();
-            }, 3000);
-        });
-
-        process.on('warning', (e: any) => {
-            (process as any).send('pid:' + process.pid + ': ' + e + ' \r\n stack: ' + e);
-        });
-
-
-        // ******************** Обработка сообщений родительского процесса ********************
-        process.on('message', (data) => {
-            if (!data) return;
-            // (process as any).send(data.action);
-
-            let params = data.params;
-            if (!params) return false;
-
-            switch(data.action) {
-                case 'audioBuffer':
-                    if (params.sessionID && params.data.length) {
-                        this.socket.addAudioBuffer(params);
-                    }
-                    break;
-
-                case 'rtpInPort':
-                    this.createHandlers();
-                    this.socket.rtpInPort(params);
-                    break;
-
-                case 'init':
-                    this.socket.init(params);
-                    (process as any).send(data);
-                    break;
-
-                case 'close':
-                    this.socket.close();
-                    break;
-
-                case 'stop_play':
-                    this.socket.stopPlay();
-                    break;
-
-                case 'start_play':
-                    if (params.file || params.audioBuffer) {
-                        this.player.startPlay(data);
-                    }
-                    break;
-
-                case 'rec':
-                    (process as any).send(data);
-                    this.socket.rec(params);
-                    this.recorder.rec(params);
-                    this.dtmf.rec(params);
-                    this.stt.rec(params);
-                    break;
-
-                default:
-                    break;
+        // ********* Обработка событий *********
+        this.on('audioBuffer', (data: any) => {
+            if (data.params.sessionID && data.params.data.length) {
+                this.player.emit('audioBuffer', data.params);
             }
+        });
+
+        this.on('rtpInPort', (data: any) => {
+            this.createHandlers();
+            this.socket.emit('rtpInPort', data.params);
+        });
+
+        this.on('init', (data: any) => {
+            this.socket.emit('init', data.params);
+            (process as any).send(data);
+        });
+
+        this.on('close', (data: any) => {
+            this.socket.emit('close');
+        });
+
+        this.on('stop_play', (data: any) => {
+            this.player.emit('stop_play');
+        });
+
+        this.on('start_play', (data: any) => {
+            if (data.params.file || data.params.audioBuffer) {
+                this.player.emit('start_play', data);
+            }
+        });
+
+        this.on('rec', (data: any) => {
+            (process as any).send(data);
+            this.socket.emit('rec', data.params);
+            this.recorder.emit('rec', data.params);
+            this.dtmf.emit('rec', data.params);
+            this.stt.emit('rec', data.params);
         });
     }
 
     // ******************** Создание и добавление компонентов класса ********************
     createHandlers() {
+
         // ******************** Создание экземпляров ********************
         this.socket = new Socket();
         this.player = new Player();
@@ -93,8 +66,7 @@ class MediaHandler {
         this.dtmf = new Dtmf();
         this.stt = new Stt();
 
-
-        // ******************** Обработчики Плеера ********************
+        // ******************** Обработчики Сокета ********************
         this.socket.on('writeDataIn', (buffer: Buffer) => {
             this.recorder.emit('writeDataIn', buffer);
         });
@@ -102,7 +74,6 @@ class MediaHandler {
         this.socket.on('socketClose', () => {
             this.recorder.emit('socketClose');
         });
-
 
         this.socket.on('dtmf', (data: any) => {
             this.dtmf.emit('dtmf', data);
@@ -130,5 +101,3 @@ class MediaHandler {
         });
     }
 }
-
-let mediaHandler = new MediaHandler();

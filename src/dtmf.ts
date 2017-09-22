@@ -21,6 +21,7 @@ export class Dtmf extends EventEmitter {
         this.g711 = new(require('./G711').G711)();
         this.in = {};
 
+        // ********* Обработка событий *********
         this.on('dtmf', (data: any) => {
             if (this.in && this.in.dtmf_detect) {
                 this.setDtmfMode();
@@ -32,6 +33,10 @@ export class Dtmf extends EventEmitter {
             if (this.in && this.in.dtmf_detect) {
                 this.dtmfDetect(payload);
             }
+        });
+
+        this.on('rec', (params: any) => {
+            this.rec(params);
         });
     }
 
