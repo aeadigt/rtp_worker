@@ -4,14 +4,13 @@ import {Buffer} from 'buffer';
 export class Socket extends EventEmitter {
     private client: any;
     private stun: any;
-    private stt: any;
     private stream_on: any;
 
     private audioPayload: any;
     private wavDataOffset: any;
     private RtpPacket: any;
 
-    private lastSttOpt: any;
+    
     private g711: any;
 
     constructor() {
@@ -19,7 +18,6 @@ export class Socket extends EventEmitter {
 
         this.client = require("dgram").createSocket('udp4');
         this.stun = require('vs-stun');
-        this.stt;
         this.stream_on;
 
         this.audioPayload = 0; //RFC3551//PCMU,
@@ -27,7 +25,6 @@ export class Socket extends EventEmitter {
         this.RtpPacket = require('./rtppacket').RtpPacket;
 
         this.g711 = new(require('./G711').G711)();
-        this.lastSttOpt;
 
         this.on('addBuffer', (buffer: Buffer) => {
             this.send(buffer);
@@ -81,8 +78,6 @@ export class Socket extends EventEmitter {
             };
         }
 
-        this.stt = require('./stt');
-
         this.client.params = params;
 
         let clientParams = '';
@@ -129,31 +124,7 @@ export class Socket extends EventEmitter {
 
                     let payload = buf2array(data.source);
 
-                    if (params.stt_detect) {
-                        var options = params.options && params.options.options;
-                        if (options) {
-                            if (!this.stt.isReady()) {
-                                if (!this.stt.isConnecting()) {
-                                    (process as any).send({ action: 'start_stt', params: options });
-                                    this.stt.init(options,
-                                        (error: any, params: any) => {
-                                            var res: any = {
-                                                action: 'sttInit'
-                                            };
-                                            if (error)
-                                                res.error = error;
-                                            else {
-                                                res.params = params;
-                                            }
-                                            (process as any).send(res);
-                                        });
-                                }
-                            } else {
-                                this.stt.send(payload);
-                            }
-                        }
-                    }
-
+                    this.emit('stt', payload);
                     this.emit('payload', payload);
                 }
             }
@@ -191,14 +162,8 @@ export class Socket extends EventEmitter {
 
     // ******************** Установка параметров ********************
     private rec(params: any) { 
-        for (var key in params)
+        for (var key in params) {
             this.client.params.in[key] = params[key];
-
-        if (params.stt_detect) {
-            if (JSON.stringify(params) != JSON.stringify(this.lastSttOpt) &&
-                this.stt && this.stt.isReady())
-                this.stt.stop();
-            this.lastSttOpt = params;
         }
     }
 }

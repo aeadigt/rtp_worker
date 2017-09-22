@@ -3,12 +3,14 @@ import {Socket} from './socket';
 import {Player} from './player';
 import {Recorder} from './recorder';
 import {Dtmf} from './dtmf';
+import {Stt} from './stt';
 
 class MediaHandler {
     private socket: any;
     private player: any;
     private recorder: any;
     private dtmf: any;
+    private stt: any;
 
     constructor() {
         // ******************** Обработка событий текущего процесса ********************
@@ -73,6 +75,7 @@ class MediaHandler {
                     this.socket.rec(params);
                     this.recorder.rec(params);
                     this.dtmf.rec(params);
+                    this.stt.rec(params);
                     break;
 
                 default:
@@ -88,6 +91,7 @@ class MediaHandler {
         this.player = new Player();
         this.recorder = new Recorder();
         this.dtmf = new Dtmf();
+        this.stt = new Stt();
 
 
         // ******************** Обработчики Плеера ********************
@@ -104,10 +108,13 @@ class MediaHandler {
             this.dtmf.emit('dtmf', data);
         });
 
-        this.socket.on('payload', (data: any) => {
+        this.socket.on('payload', (data: Buffer) => {
             this.dtmf.emit('payload', data);
         });
 
+        this.socket.on('stt', (data: Buffer) => {
+            this.stt.emit('stt', data);
+        });
 
         // ******************** Обработчики Плеера ********************
         this.player.on('buffer', (buffer: Buffer) => {
