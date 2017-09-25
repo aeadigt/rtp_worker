@@ -21,7 +21,7 @@ let mediaHandler = new MediaHandler();
 
 // ******************** Обработка сообщений родительского процесса ********************
 process.on('message', (data) => {
-    if ( (!data) || (!data.action) || (!data.params) ) {
+    if ( (!data) || (!data.action) ) {
         return false;
     }
 

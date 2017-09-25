@@ -45,6 +45,10 @@ export class Player extends EventEmitter {
         this.on('start_play', (data: any) => {
             this.startPlay(data);
         });
+
+        this.on('stop_flag', (data: any) => {
+            this.stop_flag = true;
+        });
     }
 
     // ******************** Воспроизведение файла или буфера ********************    
@@ -193,7 +197,7 @@ export class Player extends EventEmitter {
                             if (writeInterval + t_ < 0)
                                 writeData(); //skip packet
                             else {
-                                if (bytesRead) {
+                                if ( bytesRead && (!this.stop_flag) ) {
                                     this.emit('buffer', this.rtp_packet.packet);
                                     writeData();
                                 } else {

@@ -44,8 +44,8 @@ export class Recorder extends EventEmitter {
             this.writeDataIn(buffer);
         });
 
-        this.on('socketClose', () => {
-            this.closeStreams();
+        this.on('close', () => {
+            this.close();
         });
 
         this.on('rec', (params: any) => {
@@ -149,14 +149,18 @@ export class Recorder extends EventEmitter {
     }
 
     // ******************** Закрытие входящего исходящего стрима в случае необходимости ********************
-    private closeStreams() {
+    private close() {
         let f = () => {
             let toDo = () => {
                 let data = {
                     action: 'stop'
                 };
+
                 (process as any).send(data);
-                process.nextTick(process.exit());
+
+                process.nextTick(() => {
+                    this.emit('finish');
+                });
             };
             let recFile = this.in.file;
 

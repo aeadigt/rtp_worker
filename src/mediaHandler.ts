@@ -34,6 +34,7 @@ export class MediaHandler extends EventEmitter {
         });
 
         this.on('close', (data: any) => {
+            this.player.emit('stop_flag', true);
             this.socket.emit('close');
         });
 
@@ -71,8 +72,8 @@ export class MediaHandler extends EventEmitter {
             this.recorder.emit('writeDataIn', buffer);
         });
 
-        this.socket.on('socketClose', () => {
-            this.recorder.emit('socketClose');
+        this.socket.on('close', () => {
+            this.recorder.emit('close');
         });
 
         this.socket.on('dtmf', (data: any) => {
@@ -98,6 +99,11 @@ export class MediaHandler extends EventEmitter {
 
         this.player.on('writeDataOut', (buffer: Buffer) => {
             this.recorder.emit('writeDataOut', buffer);
+        });
+
+        // ******************** Обработчики Recorder ********************
+        this.recorder.on('finish', (buffer: Buffer) => {
+            process.exit()
         });
     }
 }
