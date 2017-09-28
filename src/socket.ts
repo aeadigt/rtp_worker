@@ -60,11 +60,11 @@ export class Socket extends EventEmitter {
                         rtpIn = value.public
                     }
                     // (process as any).send({ action: 'rtpInPort', params: rtpIn });
-                    this.emit('proxyData', { action: 'rtpInPort', params: rtpIn });
+                    this.emit('event', { action: 'rtpInPort', params: rtpIn });
                 }, { count: 1, timeout: 100 });
             } else {
                 // (process as any).send({ action: 'rtpInPort', params: rtpIn });
-                this.emit('proxyData', { action: 'rtpInPort', params: rtpIn });
+                this.emit('event', { action: 'rtpInPort', params: rtpIn });
             }
         })
         return;
@@ -103,7 +103,7 @@ export class Socket extends EventEmitter {
 
         this.client.on("message", (msg: any, rinfo: any) => {
             if (!this.stream_on) {
-                this.emit('proxyData', {
+                this.emit('event', {
                     action: 'stream_on',
                     params: {
                         port: this.client.address().port,
@@ -132,7 +132,7 @@ export class Socket extends EventEmitter {
                 if (data.type == this.audioPayload) {
 
                     if (params.media_stream) {
-                        this.emit('proxyData', {
+                        this.emit('event', {
                             action: 'mediaStream',
                             params: {
                                 data: Array.from(new Uint8Array(data.source)) // for webkit - data.source
@@ -184,7 +184,7 @@ export class Socket extends EventEmitter {
         this.client.send(buffer, 0, buffer.length, this.client.params.out.port, this.client.params.out.ip, (err: any) => {
             if (err) {
                 // (process as any).send(err);
-                this.emit('proxyData', err);
+                this.emit('event', err);
             }
         });
     }

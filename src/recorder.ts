@@ -104,7 +104,7 @@ export class Recorder extends EventEmitter {
                 });
 
                 this.audio_stream_in.on("finish", () => {
-                    this.emit('proxyData', {
+                    this.emit('event', {
                         action: 'recOff',
                         params: {
                             file: this.in.file
@@ -144,7 +144,7 @@ export class Recorder extends EventEmitter {
                 if (this.audio_stream_in)
                     this.audio_stream_in.end();
                 else {
-                    this.emit('proxyData', {
+                    this.emit('event', {
                         action: 'recOff',
                         params: {},
                         error: 'Record file not found'
@@ -167,7 +167,7 @@ export class Recorder extends EventEmitter {
                     action: 'stop'
                 };
 
-                this.emit('proxyData', data);
+                this.emit('event', data);
                 // (process as any).send(data);
 
                 process.nextTick(() => {
@@ -184,7 +184,7 @@ export class Recorder extends EventEmitter {
                 let sox = spawn('sox', [this.in.type || '-m', recFile + '.in', recFile + '.out', recFile]);
                 sox.on('error', (e: any) => {
                     // (process as any).send('SOX on Error pid:' + process.pid + ': ' + e.stack);
-                    this.emit('proxyData', 'SOX on Error pid:' + process.pid + ': ' + e.stack);
+                    this.emit('event', 'SOX on Error pid:' + process.pid + ': ' + e.stack);
                     toDo();
                 });
                 sox.stdout.on('finish', () => {

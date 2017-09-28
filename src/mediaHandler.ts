@@ -30,7 +30,8 @@ export class MediaHandler extends EventEmitter {
 
         this.on('init', (data: any) => {
             this.socket.emit('init', data.params);
-            (process as any).send(data);
+            // (process as any).send(data);
+            this.emit('event', data);
         });
 
         this.on('close', (data: any) => {
@@ -49,7 +50,8 @@ export class MediaHandler extends EventEmitter {
         });
 
         this.on('rec', (data: any) => {
-            (process as any).send(data);
+            // (process as any).send(data);
+            this.emit('event', data);
             this.socket.emit('rec', data.params);
             this.recorder.emit('rec', data.params);
             this.dtmf.emit('rec', data.params);
@@ -68,17 +70,17 @@ export class MediaHandler extends EventEmitter {
         this.stt = new Stt();
 
         // ******************** Подписка на проксирующие данные ********************
-        let proxyData = (data: any) => {
+        let onEvent = (data: any) => {
             if (data) {
-                this.emit('proxyData', data);
+                this.emit('event', data);
             }
         }
 
-        this.socket.on('proxyData', proxyData);
-        this.player.on('proxyData', proxyData);
-        this.recorder.on('proxyData', proxyData);
-        this.dtmf.on('proxyData', proxyData);
-        this.stt.on('proxyData', proxyData);
+        this.socket.on('event', onEvent);
+        this.player.on('event', onEvent);
+        this.recorder.on('event', onEvent);
+        this.dtmf.on('event', onEvent);
+        this.stt.on('event', onEvent);
 
         // ******************** Обработчики Сокета ********************
         this.socket.on('writeDataIn', (buffer: Buffer) => {

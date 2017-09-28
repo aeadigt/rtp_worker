@@ -20,7 +20,7 @@ import {MediaHandler} from './mediaHandler';
 
 let mediaHandler = new MediaHandler();
 
-mediaHandler.on('proxyData', (data: any) => {
+mediaHandler.on('event', (data: any) => {
     if (data) {
         (process as any).send(data);
     }

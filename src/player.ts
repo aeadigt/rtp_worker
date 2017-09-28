@@ -60,13 +60,13 @@ export class Player extends EventEmitter {
                 if (!FileStream.existsSync(f)) {
                     data.error = 'File not exists';
                     // (process as any).send(data);
-                    this.emit('proxyData', data);
+                    this.emit('event', data);
                     return;
                 } else {
                     if (!require('./wav').checkFormat(f, [6, 7])) { //6-pcma,7pcmu
                         data.error = 'Invalid File Format "' + f + '"';
                         // (process as any).send(data);
-                        this.emit('proxyData', data);
+                        this.emit('event', data);
                         return;
                     }
                 }
@@ -78,17 +78,17 @@ export class Player extends EventEmitter {
 
         let toDo = () => {
             // (process as any).send(data);
-            this.emit('proxyData', data);
+            this.emit('event', data);
 
             this.play(params, (resetFlag: any) => {
                 if (!resetFlag) {
                     data.action = 'stop_play';
                     // (process as any).send(data);
-                    this.emit('proxyData', data);
+                    this.emit('event', data);
                     this.stop_flag = true;
                 } else {
                     data.action = 'reset_play';
-                    this.emit('proxyData', data);
+                    this.emit('event', data);
                     // (process as any).send(data);
                 }
             });
@@ -138,7 +138,7 @@ export class Player extends EventEmitter {
             let writeInterval = this.bufferSize / 8; //20, //20;//ms
 
             // (process as any).send({ action: 'audioBuffer', params: { data: [bytesRead] } });
-            this.emit('proxyData', { action: 'audioBuffer', params: { data: [bytesRead] } });
+            this.emit('event', { action: 'audioBuffer', params: { data: [bytesRead] } });
 
             let writeData = () => {
                 if (this.rtp_packet && bytesRead) {

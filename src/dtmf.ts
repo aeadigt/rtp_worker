@@ -49,7 +49,7 @@ export class Dtmf extends EventEmitter {
         if (!this.dtmf_mode || this.change_flag) {
             this.dtmf_mode = 'rfc2833';
         }
-        this.emit('proxyData', {
+        this.emit('event', {
             action: 'set_dtmf_mode',
             params: this.dtmf_mode
         });
@@ -64,7 +64,7 @@ export class Dtmf extends EventEmitter {
 
         if (dtmf.duration < this.prev_dtmf_dur || this.prev_dtmf_dur == 0) {
             if (!this.change_flag) {
-                this.emit('proxyData', {
+                this.emit('event', {
                     action: 'dtmf_key',
                     params: {
                         key: dtmf.event
@@ -116,7 +116,7 @@ export class Dtmf extends EventEmitter {
                     this.setDtmfMode();
                 }
                 if (c.key !== undefined) {
-                    this.emit('proxyData', {
+                    this.emit('event', {
                         action: 'dtmf_key',
                         params: {
                             key: c.key
@@ -131,7 +131,7 @@ export class Dtmf extends EventEmitter {
                     let last_key = c.key;
                 };
                 if (c.seq !== undefined)
-                    this.emit('proxyData', {
+                    this.emit('event', {
                         action: 'dtmf_seq',
                         params: {
                             key: c.seq
