@@ -24,7 +24,7 @@ export class Socket extends EventEmitter {
         this.wavDataOffset = 58;
         this.RtpPacket = require('./rtppacket').RtpPacket;
 
-        this.g711 = new(require('./G711').G711)();
+        this.g711 = new(require('../G711').G711)();
 
         // ********* Обработка событий *********
         this.on('addBuffer', (buffer: Buffer) => {

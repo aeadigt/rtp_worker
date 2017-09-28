@@ -26,7 +26,7 @@ export class Player extends EventEmitter {
         this.wavDataOffset = 58;
         this.rtp_packet;
         this.audioPayload = 0; //RFC3551//PCMU,
-        this.RtpPacket = require('./rtppacket').RtpPacket;
+        this.RtpPacket = require('./rtp/rtppacket').RtpPacket;
         this.audio_stream_out;
         this.isBufferReceived;
 

@@ -1,5 +1,5 @@
 // ******************** Загрузка зависимостей ********************
-import {Socket} from './socket';
+import {Socket} from './rtp/socket';
 import {Player} from './player';
 import {Recorder} from './recorder';
 import {Dtmf} from './dtmf';
