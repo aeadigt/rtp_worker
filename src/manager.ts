@@ -17,7 +17,15 @@ process.on('warning', (e: any) => {
 
 // ******************** Загрузка зависимостей ********************
 import {MediaHandler} from './mediaHandler';
+
 let mediaHandler = new MediaHandler();
+
+mediaHandler.on('proxyData', (data: any) => {
+    if (data) {
+        (process as any).send(data);
+    }
+});
+
 
 // ******************** Обработка сообщений родительского процесса ********************
 process.on('message', (data) => {

@@ -2,7 +2,6 @@ import {EventEmitter} from 'events';
 import * as FileStream from 'fs';
 
 export class Player extends EventEmitter {
-    private fs: any;
     private audioBuffers: any;
     private streaming: any;
     private stop_flag: any;
@@ -18,7 +17,6 @@ export class Player extends EventEmitter {
 
     constructor() {
         super();
-        this.fs = FileStream;
         this.audioBuffers = {};
         this.streaming;
         this.stop_flag;
@@ -56,17 +54,19 @@ export class Player extends EventEmitter {
         let params = data.params;
 
         if (params.file) {
-            var files = params.file.split(";");
+            let files = params.file.split(";");
 
             files.forEach((f: any) => {
-                if (!this.fs.existsSync(f)) {
+                if (!FileStream.existsSync(f)) {
                     data.error = 'File not exists';
-                    (process as any).send(data);
+                    // (process as any).send(data);
+                    this.emit('proxyData', data);
                     return;
                 } else {
                     if (!require('./wav').checkFormat(f, [6, 7])) { //6-pcma,7pcmu
                         data.error = 'Invalid File Format "' + f + '"';
-                        (process as any).send(data);
+                        // (process as any).send(data);
+                        this.emit('proxyData', data);
                         return;
                     }
                 }
@@ -77,21 +77,24 @@ export class Player extends EventEmitter {
             return;
 
         let toDo = () => {
-            (process as any).send(data);
+            // (process as any).send(data);
+            this.emit('proxyData', data);
 
             this.play(params, (resetFlag: any) => {
                 if (!resetFlag) {
                     data.action = 'stop_play';
-                    (process as any).send(data);
+                    // (process as any).send(data);
+                    this.emit('proxyData', data);
                     this.stop_flag = true;
                 } else {
                     data.action = 'reset_play';
-                    (process as any).send(data);
+                    this.emit('proxyData', data);
+                    // (process as any).send(data);
                 }
             });
         };
 
-        if (this.stop_flag === false) {
+        if (!this.stop_flag) {
             this.stop_flag = true;
             setTimeout(toDo, 50);
         } else
@@ -102,7 +105,7 @@ export class Player extends EventEmitter {
     private play(params: any, cb: any) {
         // (process as any).send('rtpPlayer method play');
 
-        var files: any[];
+        let files: any[];
 
         if (params.file) {
             files = params.file.split(";");
@@ -111,10 +114,10 @@ export class Player extends EventEmitter {
 
         this.streaming = params.streaming;
 
-        var f = () => {
+        let f = () => {
             this.startPlayFile();
 
-            var start: any,
+            let start: any,
                 i = 0,
                 contents: any,
                 buf: any,
@@ -122,7 +125,7 @@ export class Player extends EventEmitter {
 
             if (params.file)
                 try {
-                    contents = this.fs.readFileSync(params.file);
+                    contents = FileStream.readFileSync(params.file);
                     this.fileCodec = contents.readUInt16LE(20);
                     contents = new Buffer(contents.slice(this.wavDataOffset, contents.length - 1));
                 } catch (e_) {
@@ -132,13 +135,14 @@ export class Player extends EventEmitter {
 
             this.stop_flag = false;
 
-            var writeInterval = this.bufferSize / 8; //20, //20;//ms
+            let writeInterval = this.bufferSize / 8; //20, //20;//ms
 
-            (process as any).send({ action: 'audioBuffer', params: { data: [bytesRead] } });
+            // (process as any).send({ action: 'audioBuffer', params: { data: [bytesRead] } });
+            this.emit('proxyData', { action: 'audioBuffer', params: { data: [bytesRead] } });
 
-            var writeData = () => {
+            let writeData = () => {
                 if (this.rtp_packet && bytesRead) {
-                    var _buf = new Buffer(buf.length);
+                    let _buf = new Buffer(buf.length);
                     this.rtp_packet.packet.copy(_buf, 0, 12);
 
                     this.emit('writeDataOut', _buf);
@@ -157,7 +161,7 @@ export class Player extends EventEmitter {
                 if (params.audioBuffer &&
                     this.audioBuffers[params.audioBuffer] &&
                     this.audioBuffers[params.audioBuffer].length > 0) {
-                    var bufferData = this.audioBuffers[params.audioBuffer].slice(0, buf.length);
+                    let bufferData = this.audioBuffers[params.audioBuffer].slice(0, buf.length);
                     buf = new Buffer(bufferData);
                     bytesRead = bufferData.length;
 
@@ -181,8 +185,8 @@ export class Player extends EventEmitter {
                     i++;
 
                     let tFn = () => {
-                        var timeOut = start + writeInterval * i;
-                        var t_ = timeOut - Date.now();
+                        let timeOut = start + writeInterval * i;
+                        let t_ = timeOut - Date.now();
                         if (params.streaming) {
                             if (this.isBufferReceived)
                                 t_ = 0;
@@ -248,13 +252,13 @@ export class Player extends EventEmitter {
         if (this.fileCodec === 7 //pcmu 
             && this.audioPayload === 8) { //pcma   //u->a transcoding
             //process.send('pid:' + process.pid + ': pcmu->pcma transcoding');
-            for (var i = 0; i < buf.length; i++)
+            for (let i = 0; i < buf.length; i++)
                 buf[i] = this.g711.ulaw2alaw(buf.readInt8(i));
         } else {
             if (this.fileCodec === 6 //pcma 
                 && this.audioPayload === 0) { //pcmu  a->u transcoding
                 //process.send('pid:' + process.pid + ': pcmu->pcma transcoding');
-                for (var i = 0; i < buf.length; i++)
+                for (let i = 0; i < buf.length; i++)
                     buf[i] = this.g711.alaw2ulaw(buf.readInt8(i));
             }
         }

@@ -59,10 +59,12 @@ export class Socket extends EventEmitter {
                     if (value && value.public) {
                         rtpIn = value.public
                     }
-                    (process as any).send({ action: 'rtpInPort', params: rtpIn });
+                    // (process as any).send({ action: 'rtpInPort', params: rtpIn });
+                    this.emit('proxyData', { action: 'rtpInPort', params: rtpIn });
                 }, { count: 1, timeout: 100 });
             } else {
-                (process as any).send({ action: 'rtpInPort', params: rtpIn });
+                // (process as any).send({ action: 'rtpInPort', params: rtpIn });
+                this.emit('proxyData', { action: 'rtpInPort', params: rtpIn });
             }
         })
         return;
@@ -101,13 +103,20 @@ export class Socket extends EventEmitter {
 
         this.client.on("message", (msg: any, rinfo: any) => {
             if (!this.stream_on) {
-                (process as any).send({
+                this.emit('proxyData', {
                     action: 'stream_on',
                     params: {
                         port: this.client.address().port,
                         rinfo: rinfo
                     }
                 });
+                // (process as any).send({
+                //     action: 'stream_on',
+                //     params: {
+                //         port: this.client.address().port,
+                //         rinfo: rinfo
+                //     }
+                // });
                 this.stream_on = true;
             }
             var params = this.client.params.in;
@@ -123,12 +132,18 @@ export class Socket extends EventEmitter {
                 if (data.type == this.audioPayload) {
 
                     if (params.media_stream) {
-                        (process as any).send({
+                        this.emit('proxyData', {
                             action: 'mediaStream',
                             params: {
                                 data: Array.from(new Uint8Array(data.source)) // for webkit - data.source
                             }
                         });
+                        // (process as any).send({
+                        //     action: 'mediaStream',
+                        //     params: {
+                        //         data: Array.from(new Uint8Array(data.source)) // for webkit - data.source
+                        //     }
+                        // });
                     }
 
                     if (params.rec && params.file) {
@@ -168,7 +183,8 @@ export class Socket extends EventEmitter {
         // (process as any).send('Send Buffer: ' + buffer);
         this.client.send(buffer, 0, buffer.length, this.client.params.out.port, this.client.params.out.ip, (err: any) => {
             if (err) {
-                (process as any).send(err);
+                // (process as any).send(err);
+                this.emit('proxyData', err);
             }
         });
     }

@@ -34,7 +34,8 @@ export class Stt extends EventEmitter {
         if (options) {
             if (!this.stt.isReady()) {
                 if (!this.stt.isConnecting()) {
-                    (process as any).send({ action: 'start_stt', params: options });
+                    // (process as any).send({ action: 'start_stt', params: options });
+                    this.emit('proxyData', { action: 'start_stt', params: options });
 
                     this.stt.init(options, (error: any, params: any) => {
                             let res: any = {
@@ -47,7 +48,8 @@ export class Stt extends EventEmitter {
                                 res.params = params;
                             }
 
-                            (process as any).send(res);
+                            // (process as any).send(res);
+                            this.emit('proxyData', res);
                         });
                 }
             } else {

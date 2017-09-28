@@ -104,12 +104,18 @@ export class Recorder extends EventEmitter {
                 });
 
                 this.audio_stream_in.on("finish", () => {
-                    (process as any).send({
+                    this.emit('proxyData', {
                         action: 'recOff',
                         params: {
                             file: this.in.file
                         }
                     });
+                    // (process as any).send({
+                    //     action: 'recOff',
+                    //     params: {
+                    //         file: this.in.file
+                    //     }
+                    // });
                 });
                 this.rec_start = process.hrtime(); //время старта входящего потока
             }
@@ -138,11 +144,16 @@ export class Recorder extends EventEmitter {
                 if (this.audio_stream_in)
                     this.audio_stream_in.end();
                 else {
-                    (process as any).send({
+                    this.emit('proxyData', {
                         action: 'recOff',
                         params: {},
                         error: 'Record file not found'
                     });
+                    // (process as any).send({
+                    //     action: 'recOff',
+                    //     params: {},
+                    //     error: 'Record file not found'
+                    // });
                 }
             }
         }
@@ -156,7 +167,8 @@ export class Recorder extends EventEmitter {
                     action: 'stop'
                 };
 
-                (process as any).send(data);
+                this.emit('proxyData', data);
+                // (process as any).send(data);
 
                 process.nextTick(() => {
                     this.emit('finish');
@@ -171,7 +183,8 @@ export class Recorder extends EventEmitter {
                     // -M: стерео файл, левый канал - входящий поток, правый - исходящий 
                 let sox = spawn('sox', [this.in.type || '-m', recFile + '.in', recFile + '.out', recFile]);
                 sox.on('error', (e: any) => {
-                    (process as any).send('SOX on Error pid:' + process.pid + ': ' + e.stack);
+                    // (process as any).send('SOX on Error pid:' + process.pid + ': ' + e.stack);
+                    this.emit('proxyData', 'SOX on Error pid:' + process.pid + ': ' + e.stack);
                     toDo();
                 });
                 sox.stdout.on('finish', () => {

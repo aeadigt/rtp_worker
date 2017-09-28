@@ -67,6 +67,19 @@ export class MediaHandler extends EventEmitter {
         this.dtmf = new Dtmf();
         this.stt = new Stt();
 
+        // ******************** Подписка на проксирующие данные ********************
+        let proxyData = (data: any) => {
+            if (data) {
+                this.emit('proxyData', data);
+            }
+        }
+
+        this.socket.on('proxyData', proxyData);
+        this.player.on('proxyData', proxyData);
+        this.recorder.on('proxyData', proxyData);
+        this.dtmf.on('proxyData', proxyData);
+        this.stt.on('proxyData', proxyData);
+
         // ******************** Обработчики Сокета ********************
         this.socket.on('writeDataIn', (buffer: Buffer) => {
             this.recorder.emit('writeDataIn', buffer);

@@ -49,10 +49,14 @@ export class Dtmf extends EventEmitter {
         if (!this.dtmf_mode || this.change_flag) {
             this.dtmf_mode = 'rfc2833';
         }
-        (process as any).send({
+        this.emit('proxyData', {
             action: 'set_dtmf_mode',
             params: this.dtmf_mode
         });
+        // (process as any).send({
+        //     action: 'set_dtmf_mode',
+        //     params: this.dtmf_mode
+        // });
     }
 
     checkDtmf(data: any) {
@@ -60,12 +64,18 @@ export class Dtmf extends EventEmitter {
 
         if (dtmf.duration < this.prev_dtmf_dur || this.prev_dtmf_dur == 0) {
             if (!this.change_flag) {
-                (process as any).send({
+                this.emit('proxyData', {
                     action: 'dtmf_key',
                     params: {
                         key: dtmf.event
                     }
                 });
+                // (process as any).send({
+                //     action: 'dtmf_key',
+                //     params: {
+                //         key: dtmf.event
+                //     }
+                // });
             }
             this.change_flag = false;
         }
@@ -106,21 +116,33 @@ export class Dtmf extends EventEmitter {
                     this.setDtmfMode();
                 }
                 if (c.key !== undefined) {
-                    (process as any).send({
+                    this.emit('proxyData', {
                         action: 'dtmf_key',
                         params: {
                             key: c.key
                         }
                     });
+                    // (process as any).send({
+                    //     action: 'dtmf_key',
+                    //     params: {
+                    //         key: c.key
+                    //     }
+                    // });
                     let last_key = c.key;
                 };
                 if (c.seq !== undefined)
-                    (process as any).send({
+                    this.emit('proxyData', {
                         action: 'dtmf_seq',
                         params: {
                             key: c.seq
                         }
                     });
+                    // (process as any).send({
+                    //     action: 'dtmf_seq',
+                    //     params: {
+                    //         key: c.seq
+                    //     }
+                    // });
             });
         }
     }
